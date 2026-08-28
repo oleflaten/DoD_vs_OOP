@@ -9,8 +9,8 @@
     // asm volatile("" : : "r,m"(value) : "memory");
 // }
 
-constexpr size_t ENTITY_COUNT = 100;   //1'000'000;
-constexpr int ITERATIONS = 1;
+constexpr size_t ENTITY_COUNT = 1000;   //1'000'000;
+constexpr int ITERATIONS = 10;
 
 // ==========================================
 // 1. OOP Approach (Array of Structures / Polymorphism)
@@ -87,7 +87,7 @@ int main() {
     std::vector<std::unique_ptr<Entity>> oopEntities;
     oopEntities.reserve(ENTITY_COUNT);
     for (size_t i = 0; i < ENTITY_COUNT; ++i) {
-        oopEntities.push_back(std::make_unique<Particle2>()); // also test Particle2 here
+        oopEntities.push_back(std::make_unique<Particle>()); // also test Particle2 here
     }
 
     // Warm-up cache (not sure this is necessary...)
