@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(DoDOOP LANGUAGES CXX)
+project(DoD_OOP LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Enable vectorization report flags for GCC and Clang compilers
+# Enable vectorization report flags for GCC compiler
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # GCC flags
     add_compile_options(-ftree-vectorize -fopt-info-vec-optimized)
@@ -18,10 +18,10 @@ elseif(MSVC)
     add_compile_options(/Qvec-report:1) #  Level 2 prints ALL loops, including those that were not vectorized (e.g., line 90)
 endif()
 
-add_executable(DoDOOP main.cpp)
+add_executable(DoD_OOP main.cpp)
 
 include(GNUInstallDirs)
-install(TARGETS DoDOOP
+install(TARGETS DoD_OOP
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
