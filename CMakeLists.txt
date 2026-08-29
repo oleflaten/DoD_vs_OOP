@@ -15,8 +15,8 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
     add_compile_options(-fvectorize -Rpass=loop-vectorize) # -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize)
 elseif(MSVC)
     # MSVC (Visual Studio) flags
-    # add_compile_options(/Qvec-report:1) #  Level 1 prints ONLY successfully vectorized loops (DoD for loop)
-                                          #  Level 2 prints ALL loops, including those that were not vectorized (OOP for loops)
+    add_compile_options(/Qvec-report:1) #  Level 1 prints ONLY successfully vectorized loops (DoD for loop)
+                                        #  Level 2 prints ALL loops, including those that were not vectorized (OOP for loops)
 endif()
 
 add_executable(DoD_OOP main.cpp)
