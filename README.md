@@ -7,12 +7,12 @@ Small test to see speed benefits one could get from DoD vs OOP:
 * see SIMD get to work
 
 Two versions of OOP are implemented.
-Both inherit from a base class, and use its pure virtual function.
+Both inherit from a base class, and use it's pure virtual function.
 * The first has its data members local (float x{1.0f}, y{2.0f}, z{3.0f}; )
 * The second has a pointer to a Vec3 (Vec3 *mPosition; )
 
-The OOP version is then used in a AoS setup, 
-    and in a for loop, calling the virtual function
+The OOP versions are then used in an AoS setup, 
+    and inside a for-loop, call the virtual function
 
-The DoD version is straight up SoA version, 
-    and in the for loop, calling a local function.
+The DoD version is a straight-up SoA version, 
+    and inside the for-loop, calls a local function.
