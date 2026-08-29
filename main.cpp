@@ -3,12 +3,6 @@
 #include <chrono>
 #include <memory>
 
-// Prevent compiler from optimizing away unused variables
-template <typename T>
-void doNotOptimize(T&& value) {
-    asm volatile("" : : "r,m"(value) : "memory");
-}
-
 constexpr size_t ENTITY_COUNT = 1'000'000;
 constexpr int ITERATIONS = 100;
 
@@ -114,14 +108,13 @@ int main() {
         entity->update(0.016f);
 
     // Benchmark OOP
-    auto startOOP = std::chrono::steady_clock::now();
+    auto startOOP1 = std::chrono::steady_clock::now();
     for (int iter = 0; iter < ITERATIONS; ++iter) {
         for (auto& entity : oopEntities) {
             entity->update(0.016f);
         }
     }
-    auto endOOP = std::chrono::steady_clock::now();
-    doNotOptimize(oopEntities[0].get()); // Force compiler to evaluate
+    auto endOOP1 = std::chrono::steady_clock::now();
 
 
     // OOP version with pointers to the internal data members:
@@ -145,8 +138,6 @@ int main() {
         }
     }
     auto endOOP2 = std::chrono::steady_clock::now();
-    doNotOptimize(oopEntities[0].get()); // Force compiler to evaluate
-
 
     // --------------------------------------------------
     // Setup DoD Data
@@ -165,12 +156,11 @@ int main() {
         dodSystem.update(0.016f);
     }
     auto endDoD = std::chrono::steady_clock::now();
-    doNotOptimize(dodSystem.x[0]); // Force compiler to evaluate
 
     // --------------------------------------------------
     // Print Results
     // --------------------------------------------------
-    std::chrono::duration<double, std::milli> oopDuration1 = endOOP - startOOP;      //Particle version
+    std::chrono::duration<double, std::milli> oopDuration1 = endOOP1 - startOOP1;   //Particle1 version
     std::chrono::duration<double, std::milli> oopDuration2 = endOOP2 - startOOP2;   //Particle2 version
     std::chrono::duration<double, std::milli> dodDuration = endDoD - startDoD;
 
