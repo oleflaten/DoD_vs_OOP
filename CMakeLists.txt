@@ -14,7 +14,26 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
     # Clang / Apple Clang (macOS) flags
     add_compile_options(-fvectorize -Rpass=loop-vectorize) # -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize)
 elseif(MSVC)
-    # MSVC (Visual Studio) flags
+    # --------------------------------------------------------------------------
+        # Choose ONE block below to test different SIMD register widths:
+        # --------------------------------------------------------------------------
+
+        # 1. No Auto-Vectorization (Force Scalar Processing)
+        # /O2 optimizes, but /d2Qvec- disables the loop vectorizer
+        # add_compile_options(/O2 /d2Qvec-)
+
+        # 2. 128-bit Vectorization (4 floats)
+        # /arch:SSE2 is the default on x64, so explicit flag is optional
+        # add_compile_options(/O2 /arch:SSE2)
+
+        # 3. 256-bit Vectorization (8 floats)
+        add_compile_options(/O2 /arch:AVX2)
+
+        # 4. 512-bit Vectorization (16 floats) - (depricated)
+        # Only works on AMD Zen4 cpus and Intel 11th gen and LOWER.
+        # add_compile_options(/O2 /arch:AVX512)
+
+
     add_compile_options(/Qvec-report:1) #  Level 1 prints ONLY successfully vectorized loops (DoD for loop)
                                         #  Level 2 prints ALL loops, including those that were not vectorized (OOP for loops)
 endif()

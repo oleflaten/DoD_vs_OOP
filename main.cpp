@@ -3,8 +3,8 @@
 #include <chrono>
 #include <memory>
 
-constexpr size_t ENTITY_COUNT = 1'000'000;
-constexpr int ITERATIONS = 100;
+constexpr size_t ENTITY_COUNT = 100000; //1'000'000;
+constexpr int ITERATIONS = 25;
 
 // ==========================================
 // 1. OOP Approach (Array of Structures / Polymorphism)
@@ -15,7 +15,8 @@ constexpr int ITERATIONS = 100;
 class Entity {
 public:
     virtual ~Entity() = default;
-    virtual void update(float dt) = 0;
+    virtual void update(float dt) = 0;          // just addition and multiplication
+    virtual void update2(float dt) = 0;         // more to calculate (sqrt) in the function
 };
 
 // Derived class with local data members
@@ -28,9 +29,25 @@ public:
         y += vy * dt;
         z += vz * dt;
     }
+
+    // this version requires much more compute,
+    // and is intended to stress the CPU more and give a better
+    // idea of the performance difference between OOP and DoD
+    void update2(float dt) override {
+        // 1. Calculate speed (magnitude of velocity vector)
+        float speed = std::sqrt(vx * vx + vy * vy + vz * vz);
+
+        // 2. Compute inverse speed (avoids 3 separate floating-point divisions)
+        float invSpeed = 1.0f / (speed + 0.0001f);
+
+        // 3. Update position using normalized direction vector
+        x += (vx * invSpeed) * dt;
+        y += (vy * invSpeed) * dt;
+        z += (vz * invSpeed) * dt;
+    }
 };
 
-// Helper struct for Particle2 implementation
+// Helper struct for the Particle2 implementation
 struct Vec3
 {
     float x;
@@ -62,6 +79,24 @@ public:
         mPosition->y += mVelosity->y * dt;
         mPosition->z += mVelosity->z * dt;
     }
+
+    // this version requires much more compute,
+    // and is intended to stress the CPU more and give a better
+    // idea of the performance difference between OOP and DoD
+    void update2(float dt) override {
+        // Calculate speed (velocity magnitude)
+        float speed = std::sqrt(mVelosity->x * mVelosity->x +
+                                mVelosity->y * mVelosity->y +
+                                mVelosity->z * mVelosity->z);
+
+        // Prevent division by zero if velocity is zero
+        float invSpeed = 1.0f / (speed + 0.0001f);
+
+        // Update positions using normalized velocity directions
+        mPosition->x += (mVelosity->x * invSpeed) * dt;
+        mPosition->y += (mVelosity->y * invSpeed) * dt;
+        mPosition->z += (mVelosity->z * invSpeed) * dt;
+    }
 };
 
 // ==========================================
@@ -87,6 +122,19 @@ struct ParticleSystemDoD {
             z[i] += vz[i] * dt;
         }
     }
+
+    // Heavier compute loop: higher ratio of math operations per byte loaded
+    // This should stress the CPU more and give a better idea of the performance difference between OOP and DoD
+    void update2(float dt) {
+        const size_t size = x.size();
+        for (size_t i = 0; i < size; ++i) {
+            // Trigonometric or polynomial math keeps SIMD units busy
+            float speed = std::sqrt(vx[i] * vx[i] + vy[i] * vy[i] + vz[i] * vz[i]);
+            x[i] += (vx[i] / (speed + 0.0001f)) * dt;
+            y[i] += (vy[i] / (speed + 0.0001f)) * dt;
+            z[i] += (vz[i] / (speed + 0.0001f)) * dt;
+        }
+    }
 };
 
 
@@ -98,20 +146,20 @@ int main() {
     std::vector<std::unique_ptr<Entity>> oopEntities;
     oopEntities.reserve(ENTITY_COUNT);
     for (size_t i = 0; i < ENTITY_COUNT; ++i) {
-        oopEntities.push_back(std::make_unique<Particle1>());//                  <<<<<<<<<<<<<<<<<<<<<<   Particle1 version
+        oopEntities.push_back(std::make_unique<Particle1>());//                  <<<<   Particle1 version
     }
 
     // Warm-up cache
     // (not sure this is necessary, but the idea is to get the program started and
     // have less of the main program initialization overhead in our timed test)
     for (auto& entity : oopEntities)
-        entity->update(0.016f);
+        entity->update2(0.016f); //                                             <<<< test update() and update2()
 
     // Benchmark OOP
     auto startOOP1 = std::chrono::steady_clock::now();
     for (int iter = 0; iter < ITERATIONS; ++iter) {
         for (auto& entity : oopEntities) {
-            entity->update(0.016f);
+            entity->update2(0.016f);//                                          <<<< test update() and update2()
         }
     }
     auto endOOP1 = std::chrono::steady_clock::now();
@@ -122,19 +170,19 @@ int main() {
     oopEntities.clear();
     // Repopulate with Particle2 version
     for (size_t i = 0; i < ENTITY_COUNT; ++i) {
-        oopEntities.push_back(std::make_unique<Particle2>());//                  <<<<<<<<<<<<<<<<<<<<<<   Particle2 version
+        oopEntities.push_back(std::make_unique<Particle2>());//                  <<<<   Particle2 version
     }
 
     // Warm-up cache
     for (auto& entity : oopEntities)
-        entity->update(0.016f);
+        entity->update2(0.016f);//                                             <<<< test update() and update2()
 
 
     // Benchmark OOP
     auto startOOP2 = std::chrono::steady_clock::now();
     for (int iter = 0; iter < ITERATIONS; ++iter) {
         for (auto& entity : oopEntities) {
-            entity->update(0.016f);
+            entity->update2(0.016f);//                                         <<<< test update() and update2()
         }
     }
     auto endOOP2 = std::chrono::steady_clock::now();
@@ -148,12 +196,12 @@ int main() {
     dodSystem.resize(ENTITY_COUNT);
 
     // Warm-up cache
-    dodSystem.update(0.016f);
+    dodSystem.update2(0.016f);//                                         <<<< test update() and update2()
 
     // Benchmark DoD
     auto startDoD = std::chrono::steady_clock::now();
     for (int iter = 0; iter < ITERATIONS; ++iter) {
-        dodSystem.update(0.016f);
+        dodSystem.update2(0.016f);//                                     <<<< test update() and update2()
     }
     auto endDoD = std::chrono::steady_clock::now();
 
